@@ -51,6 +51,7 @@ Cells were filtered according to the following criteria:
 * > 200 detected genes
 * <25% mitochondrial gene expression
 * <8,000 detected genes
+* > 1000 cells per sample
 
 Potential doublets were identified using Scrublet and removed before downstream analyses.
 
