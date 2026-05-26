@@ -25,7 +25,7 @@ This project integrates:
 The integrated dataset contains:
 
 * 547,360 QC-passed single cells
-* 217 tumor and adjacent tissue samples
+* 204 tumor and adjacent tissue samples
 * harmonized cell-type annotations
 * refined myeloid and stromal subpopulation labels
 
