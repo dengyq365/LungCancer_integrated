@@ -18,7 +18,7 @@ This project integrates:
 * Clinical annotations including:
 
   * tumor versus adjacent tissue
-  * histological subtype
+  * age at diagnose
   * survival information
   * immunotherapy response
 
@@ -80,7 +80,7 @@ Where available, the following clinical metadata were harmonized:
 * AJCC stage
 * overall survival
 * progression-free survival
-* immunotherapy response
+
 
 
 ---
