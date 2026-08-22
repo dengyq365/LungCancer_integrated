@@ -1,90 +1,118 @@
-# LungCancer_integrated
+# NSCLC Integrated Transcriptomic Resource
 
-# NSCLC_multiomics_reference_atlas
+This repository provides the major computational workflows used to construct an integrated transcriptomic resource of non-small-cell lung cancer (NSCLC), including scRNA-seq preprocessing, multi-cohort integration, integration benchmarking, and spatial deconvolution.
 
-A harmonized multi-omics transcriptomic resource for non-small-cell lung cancer (NSCLC), integrating bulk RNA sequencing, single-cell RNA sequencing (scRNA-seq), and spatial transcriptomics datasets from publicly available cohorts.
+## Repository structure
 
-This repository provides standardized computational workflows, processed datasets, and annotation resources for studying tumor microenvironment (TME) heterogeneity, immune–stromal interactions, and immunotherapy-associated transcriptional programs in NSCLC.
-
----
-
-# Overview
-
-This project integrates:
-
-* Bulk transcriptomic datasets from TCGA and GEO cohorts
-* Single-cell RNA sequencing datasets from multiple NSCLC studies
-* Spatial transcriptomic datasets for spatial validation
-* Clinical annotations including:
-
-  * tumor versus adjacent tissue
-  * age at diagnose
-  * survival information
-  * immunotherapy response
-
-The integrated dataset contains:
-
-* 547,360 QC-passed single cells
-* 204 tumor and adjacent tissue samples
-* harmonized cell-type annotations
-* refined myeloid and stromal subpopulation labels
-
-The processed dataset may serve as:
-
-* a reference atlas for NSCLC TME analysis
-* a reference for spatial deconvolution (e.g., cell2location)
-* a resource for biomarker discovery
-* a benchmark for computational integration methods
-
-
-```bash
-scripts/integration/runpipeline.py --min_sample_size=1000 --path=h5ad 
+```text
+LungCancer_integrated/
+├── scripts/
+│   ├── runpipeline.py
+│   ├── bbknn_integration.py
+│   ├── combat_integration.py
+│   ├── liger_integration.py
+│   ├── scanorama_integration.py
+│   └── scvi_scanvi_integration.py
+├── tutorial/
+│   ├── scRNA_plot.ipynb
+│   ├── cell2location.ipynb
+│   └── ST_plot.ipynb
+└── LICENSE
 ```
 
+## 1. scRNA-seq quality control and preprocessing
 
----
+The main preprocessing workflow is implemented in `scripts/runpipeline.py` using Scanpy v1.9.6 and Scrublet v0.2.3.
 
-# Quality Control
+Parameters used in this study:
 
-Cells were filtered according to the following criteria:
+| Parameter | Value |
+|---|---:|
+| Minimum sample size | 1,000 cells |
+| Maximum sample size | 40,000 cells |
+| Minimum genes per cell | 200 |
+| Maximum genes per cell | 8,000 |
+| Maximum mitochondrial percentage | 25% |
+| Minimum cells per gene | 3 |
+| Normalization target | 10,000 counts/cell |
+| PCA dimensions | 30 |
+| Maximum Harmony iterations | 20 |
+| Leiden resolution | 1.5 |
 
-* '>200 detected genes
-* <25% mitochondrial gene expression
-* <8,000 detected genes
-* '>1000 cells per sample
+Potential doublets were identified using Scrublet with automatically determined thresholds. After quality control, 547,360 cells were retained.
 
-Potential doublets were identified using Scrublet and removed before downstream analyses.
+Example:
 
-Batch effects across cohorts and sequencing platforms were corrected using Harmony integration.
+```bash
+python scripts/runpipeline.py \
+    --path /path/to/input_h5ad/ \
+    --min_sample_size 1000 \
+    --max_sample_size 40000 \
+    --min_genes 200 \
+    --max_genes 8000 \
+    --min_cells 3 \
+    --mt_pct 25 \
+    --resolution 1.5 \
+    --max_harmony_iter 20
+```
 
----
+## 2. scRNA-seq integration and benchmarking
 
+Harmony was used as the primary integration method. Harmony-corrected PCA embeddings were used for neighborhood construction, UMAP visualization, and Leiden clustering.
 
-# Spatial Transcriptomics
+Harmony was benchmarked against BBKNN, ComBat, LIGER, Scanorama, scVI, and scANVI. The corresponding scripts are provided in `scripts/`.
 
-Spatial transcriptomic datasets were used as an orthogonal validation modality to provide spatial context for cell-type localization within NSCLC tissues.
+Integration performance was quantitatively assessed using **scIB** metrics for both batch correction and biological conservation.
 
-The integrated scRNA-seq atlas may additionally support downstream spatial deconvolution approaches including:
+Example benchmark script:
 
-* cell2location
+```text
+scripts/bbknn_integration.py
+```
 
+The BBKNN workflow uses `orig.ident` as the batch key, 3,000 highly variable genes, 30 principal components.
 
----
+## 3. Spatial deconvolution using cell2location
 
-# Clinical Annotations
+Spatial deconvolution was performed using cell2location v0.1.4 with the integrated NSCLC scRNA-seq atlas as reference.
 
-Where available, the following clinical metadata were harmonized:
+The workflow is provided in:
 
-* age
-* sex
-* AJCC stage
-* overall survival
-* progression-free survival
+```text
+tutorial/cell2location.ipynb
+```
 
+### Reference model
 
+The `RegressionModel` was trained using:
 
----
+| Parameter | Value |
+|---|---:|
+| Reference dataset | `NSCLC_ALL.h5ad` |
+| Batch key | `orig.ident` |
+| Cell-type label | `celltype_LV2` |
+| Highly variable genes | 3,000 |
+| Training epochs | 250 |
+| Training batch size | 4,096 |
+| Posterior samples | 1,000 |
+| Posterior batch size | 2,500 |
+| Accelerator | GPU |
 
+Cell-type-specific signatures were derived from `means_per_cluster_mu_fg`.
 
+### Spatial model
 
+The Cell2location model was trained using:
 
+| Parameter | Value |
+|---|---:|
+| `N_cells_per_location` | 5 |
+| `detection_alpha` | 200 |
+| Training epochs | 1,000 |
+| `train_size` | 1 |
+| Posterior samples | 1,000 |
+| Accelerator | GPU |
+
+The `q05_cell_abundance_w_sf` estimates were used for downstream spatial visualization and spatial-region analyses.
+
+The analysis was additionally repeated using the complete integrated scRNA-seq atlas as the reference.
