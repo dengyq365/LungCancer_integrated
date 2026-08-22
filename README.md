@@ -98,7 +98,7 @@ The `RegressionModel` was trained using:
 | Posterior batch size | 2,500 |
 | Accelerator | GPU |
 
-Cell-type-specific signatures were derived from `means_per_cluster_mu_fg`.
+
 
 ### Spatial model
 
