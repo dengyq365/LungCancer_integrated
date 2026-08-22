@@ -23,7 +23,7 @@ BATCH_KEY = "orig.ident"
 N_HVG       = 3000             
 N_PCS       = 30               
 LEIDEN_RES  = 0.5
-SEED        = 42
+
 
 os.makedirs(OUT_DIR, exist_ok=True)
 logging.basicConfig(
@@ -35,9 +35,7 @@ logging.basicConfig(
     ],
 )
 log = logging.getLogger("bbknn")
-sc.settings.n_jobs = 40
-sc.settings.seed = SEED
-np.random.seed(SEED)
+
 
 
 def main():
