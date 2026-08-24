@@ -55,6 +55,25 @@ python scripts/runpipeline.py \
     --resolution 1.5 \
     --max_harmony_iter 20
 ```
+## Identification of cluster marker genes
+
+Cluster-specific marker genes were identified using the `run_deg` function implemented in `scripts/runpipeline.py`.
+
+The function performs differential expression analysis across Leiden clusters using `scanpy.tl.rank_genes_groups` with the `t-test_overestim_var` method. For each Leiden cluster, genes were ranked against the remaining cells, and genes with log2 fold change ≥ 1 and P < 0.05 were retained as candidate cluster markers. The resulting marker genes were then combined with canonical cell-type markers to support major cell-type and refined subpopulation annotation.
+
+Key settings:
+
+| Parameter | Value |
+|---|---|
+| Grouping variable | `leiden` |
+| Method | `t-test_overestim_var` |
+| Minimum log2 fold change | 1 |
+| P-value cutoff | 0.05 |
+| `pts` | `True` |
+| `rankby_abs` | `True` |
+| `use_raw` | `False` |
+
+The function returns a combined dataframe containing the filtered marker genes for all Leiden clusters.
 
 ## 2. scRNA-seq integration and benchmarking
 
